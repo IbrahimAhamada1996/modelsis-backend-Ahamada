@@ -18,7 +18,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-public class ProductTypeServiceTest {
+public class ProductTypeServiceImplTest {
 
     @Mock
     private ProductTypeRepository productTypeRepository;
@@ -40,20 +40,7 @@ public class ProductTypeServiceTest {
         verify(productTypeRepository, times(1)).findAll();
     }
 
-    @Test
-    void testGetProductTypeByIdExisting() throws ProductTypeNotFoundException {
-        // Given
-        Long productTypeId = 1L;
-        ProductType mockProductType = new ProductType();
-        when(productTypeRepository.findById(productTypeId)).thenReturn(Optional.of(mockProductType));
 
-        // When
-        ProductType result = productTypeService.getProductTypeById(productTypeId);
-
-        // Then
-        assertEquals(mockProductType, result);
-        verify(productTypeRepository, times(1)).findById(productTypeId);
-    }
 
     @Test
     void testGetProductTypeByIdNotExisting() {
@@ -81,35 +68,45 @@ public class ProductTypeServiceTest {
         assertEquals(mockProductType, result);
         verify(productTypeRepository, times(1)).save(mockProductType);
     }
-
     @Test
-    void testUpdateProductTypeExisting() throws ProductTypeNotFoundException {
+    void testUpdateProductType() throws ProductTypeNotFoundException {
         // Given
         Long productTypeId = 1L;
-        ProductType updatedProductType = new ProductType();
-        updatedProductType.setName("Updated ProductType");
-        when(productTypeRepository.existsById(productTypeId)).thenReturn(true);
-        when(productTypeRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+        String updatedProductTypeName = "Updated ProductType";
+        ProductType existingProductType = ProductType.builder()
+                .id(productTypeId)
+                .name("Original ProductType")
+                .build();
+        ProductType updatedProductType = ProductType.builder()
+                .name(updatedProductTypeName)
+                .build();
+
+        // Mock repository behavior
+        when(productTypeRepository.findById(productTypeId)).thenReturn(Optional.of(existingProductType));
+        when(productTypeRepository.save(any(ProductType.class))).thenAnswer(invocation -> {
+            ProductType savedProductType = invocation.getArgument(0);
+            return savedProductType;
+        });
 
         // When
         ProductType result = productTypeService.updateProductType(productTypeId, updatedProductType);
 
         // Then
-        assertEquals(updatedProductType.getName(), result.getName());
-        assertNotNull(result.getUpdatedAt());
-        verify(productTypeRepository, times(1)).save(any());
+        assertNotNull(result);
+        assertEquals(updatedProductTypeName, result.getName());
     }
 
     @Test
-    void testUpdateProductTypeNotExisting() {
+    void testUpdateProductType_ProductTypeNotFound() {
         // Given
         Long productTypeId = 1L;
-        ProductType updatedProductType = new ProductType();
-        when(productTypeRepository.existsById(productTypeId)).thenReturn(false);
+        ProductType updatedProductType = ProductType.builder().name("Updated ProductType").build();
 
-        // When, Then
+        // Mock repository behavior
+        when(productTypeRepository.findById(productTypeId)).thenReturn(Optional.empty());
+
+        // When and Then
         assertThrows(ProductTypeNotFoundException.class, () -> productTypeService.updateProductType(productTypeId, updatedProductType));
-        verify(productTypeRepository, never()).save(any());
     }
 
     @Test

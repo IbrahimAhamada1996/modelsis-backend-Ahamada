@@ -68,13 +68,12 @@ public class ProductServiceImp implements ProductService {
      */
     @Override
     public Product updateProduct(Long id, Product updatedProduct) throws ProductNotFoundException {
-        if (productRepository.existsById(id)) {
+        Product productRep = this.getProductById(id);
+        if (productRep!=null) {
 
-            Product product = new Product();
-            product.setId(id);
-            product.setUpdatedAt(updatedProduct.getUpdatedAt());
-            product.setCreatedAt(LocalDateTime.now());
-            return productRepository.save(product);
+            productRep.setName(updatedProduct.getName());
+            productRep.setUpdatedAt(LocalDateTime.now());
+            return productRepository.save(productRep);
         } else {
             throw new ProductNotFoundException("Produit non trouvé avec l'ID : " + id);
 

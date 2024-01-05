@@ -1,4 +1,4 @@
-package com.modelsis.backendAhamada;
+package com.modelsis.backendAhamada.config;
 
 import com.modelsis.backendAhamada.controlleur.ProductController;
 import com.modelsis.backendAhamada.controlleur.ProductTypeController;

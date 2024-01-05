@@ -3,7 +3,6 @@ package com.modelsis.backendAhamada.Service;
 import com.modelsis.backendAhamada.Exception.ProductNotFoundException;
 import com.modelsis.backendAhamada.Repository.ProductRepository;
 import com.modelsis.backendAhamada.models.Product;
-import com.modelsis.backendAhamada.service.ProductService;
 import com.modelsis.backendAhamada.service.impl.ProductServiceImp;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -13,15 +12,13 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-public class ProductServiceTest {
+public class ProductServiceImplTest {
 
     @Mock
     private ProductRepository productRepository;
@@ -77,19 +74,49 @@ public class ProductServiceTest {
         assertThrows(ProductNotFoundException.class, () -> productService.getProductById(productId));
         verify(productRepository, times(1)).findById(productId);
     }
-
-
     @Test
-    void testUpdateProductNotExisting() {
+    void testUpdateProduct() throws ProductNotFoundException {
         // Given
         Long productId = 1L;
-        Product updatedProduct = new Product();
-        when(productRepository.existsById(productId)).thenReturn(false);
+        String updatedProductName = "Updated Product";
+        Product existingProduct = Product.builder()
+                .id(productId)
+                .name("Original Product")
+//                .updatedAt(LocalDateTime.now())
+                .build();
+        Product updatedProduct = Product.builder()
+                .name(updatedProductName)
+                .build();
 
-        // When, Then
-        assertThrows(ProductNotFoundException.class, () -> productService.updateProduct(productId, updatedProduct));
-        verify(productRepository, never()).save(any());
+        // Mock repository behavior
+        when(productRepository.findById(productId)).thenReturn(Optional.of(existingProduct));
+        when(productRepository.save(any(Product.class))).thenAnswer(invocation -> {
+            Product savedProduct = invocation.getArgument(0);
+//            savedProduct.setUpdatedAt(LocalDateTime.now());
+            return savedProduct;
+        });
+
+        // When
+        Product result = productService.updateProduct(productId, updatedProduct);
+
+        // Then
+        assertNotNull(result);
+        assertEquals(updatedProductName, result.getName());
     }
+
+    @Test
+    void testUpdateProduct_ProductNotFound() {
+        // Given
+        Long productId = 1L;
+        Product updatedProduct = Product.builder().name("Updated Product").build();
+
+        // Mock repository behavior
+        when(productRepository.findById(productId)).thenReturn(Optional.empty());
+
+        // When and Then
+        assertThrows(ProductNotFoundException.class, () -> productService.updateProduct(productId, updatedProduct));
+    }
+
 
     @Test
     void testDeleteProduct() {

@@ -1,7 +1,10 @@
 package com.modelsis.backendAhamada.models;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
@@ -12,6 +15,9 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "productType")
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class ProductType implements Serializable {
     private static final long serialVersionUID = 1L;
 
@@ -26,4 +32,6 @@ public class ProductType implements Serializable {
     private LocalDateTime createdAt;
     @Column(name = "updatedAt")
     private LocalDateTime updatedAt;
+
+
 }

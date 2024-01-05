@@ -68,12 +68,12 @@ public class ProductTypeServiceImp implements ProductTypeService {
      */
     @Override
     public ProductType updateProductType(Long id, ProductType updatedProductType) throws ProductTypeNotFoundException {
-        if (productTypeRepository.existsById(id)) {
-            ProductType productType = new ProductType();
-            productType.setId(id);
-            productType.setName(updatedProductType.getName());
-            productType.setUpdatedAt(LocalDateTime.now());
-            return productTypeRepository.save(productType);
+        ProductType productTypeRep = this.getProductTypeById(id);
+
+        if (productTypeRep!=null) {
+            productTypeRep.setName(updatedProductType.getName());
+            productTypeRep.setUpdatedAt(LocalDateTime.now());
+            return productTypeRepository.save(productTypeRep);
         } else {
             throw new ProductTypeNotFoundException("Produit non trouvé avec l'ID : " + id);
 
