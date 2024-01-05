@@ -82,7 +82,6 @@ public class ProductServiceImplTest {
         Product existingProduct = Product.builder()
                 .id(productId)
                 .name("Original Product")
-//                .updatedAt(LocalDateTime.now())
                 .build();
         Product updatedProduct = Product.builder()
                 .name(updatedProductName)
@@ -92,7 +91,6 @@ public class ProductServiceImplTest {
         when(productRepository.findById(productId)).thenReturn(Optional.of(existingProduct));
         when(productRepository.save(any(Product.class))).thenAnswer(invocation -> {
             Product savedProduct = invocation.getArgument(0);
-//            savedProduct.setUpdatedAt(LocalDateTime.now());
             return savedProduct;
         });
 
