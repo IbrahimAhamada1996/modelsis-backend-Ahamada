@@ -19,7 +19,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Product implements Serializable {
+public class Product {
 
     private static final long serialVersionUID = 1L;
 
@@ -36,7 +36,4 @@ public class Product implements Serializable {
     private LocalDateTime updatedAt;
     @ManyToOne
     private ProductType productType;
-
-
-
 }

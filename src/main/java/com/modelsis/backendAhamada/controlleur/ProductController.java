@@ -1,8 +1,9 @@
 package com.modelsis.backendAhamada.controlleur;
 
 import com.modelsis.backendAhamada.Exception.ProductNotFoundException;
+import com.modelsis.backendAhamada.Mappers.ProductMapper;
+import com.modelsis.backendAhamada.dto.ProductDto;
 import com.modelsis.backendAhamada.models.Product;
-import com.modelsis.backendAhamada.models.ProductType;
 import com.modelsis.backendAhamada.service.ProductService;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
@@ -12,7 +13,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/products")
@@ -24,28 +24,32 @@ public class ProductController {
     public ProductController(ProductService productService) {
         this.productService = productService;
     }
+
     /**
      * Récupère tous les produits.
      *
      * @return Une liste de produits.
      */
     @GetMapping
-    public ResponseEntity<List<Product>>  getAllProducts() {
+    public ResponseEntity<List<ProductDto>> getAllProducts() {
         log.info("Récupération de tous les produits.");
-        return ResponseEntity.ok(productService.getAllProducts());
+        List<ProductDto> productDtos = ProductMapper.mapToProductDtoList(productService.getAllProducts());
+        return ResponseEntity.ok(productDtos);
     }
 
     /**
      * Crée un nouveau produit.
      *
-     * @param product Le produit à créer.
+     * @param productDto Le produit à créer.
      * @return Le produit créé.
      */
     @PostMapping
-    public ResponseEntity<Product> createProduct(@RequestBody Product product) {
-        log.info("Création d'un nouveau produit : {}", product);
-        Product createdProduct = productService.createProduct(product);
-        return ResponseEntity.status(HttpStatus.CREATED).body(createdProduct);
+    public ResponseEntity<ProductDto> createProduct(@RequestBody ProductDto productDto) {
+        log.info("Création d'un nouveau produit : {}", productDto);
+
+        Product createdProduct = productService.createProduct(ProductMapper.mapToProduct(productDto));
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(ProductMapper.mapToProductDto(createdProduct));
     }
 
     /**
@@ -56,29 +60,31 @@ public class ProductController {
      * @throws ProductNotFoundException Si le produit n'est pas trouvé.
      */
     @GetMapping("/{id}")
-    public ResponseEntity<Product> getProductTypeById(@PathVariable Long id) throws ProductNotFoundException {
+    public ResponseEntity<ProductDto> getProductTypeById(@PathVariable Long id) throws ProductNotFoundException {
         log.info("Récupération du produit avec l'identifiant : {}", id);
         Product product = productService.getProductById(id);
-        return ResponseEntity.status(HttpStatus.FOUND).body(product);
+        ProductDto productDto = ProductMapper.mapToProductDto(product);
+        return ResponseEntity.status(HttpStatus.FOUND).body(productDto);
     }
 
     /**
      * Met à jour un produit existant.
      *
-     * @param product Le produit mis à jour.
+     * @param productDto Le produit mis à jour.
      * @param id L'identifiant du produit à mettre à jour.
      * @return Une ResponseEntity contenant le produit mis à jour ou un statut NO_CONTENT si l'ID est nul.
      * @throws ProductNotFoundException Si le produit n'est pas trouvé.
      */
     @PutMapping("/{id}")
-    public ResponseEntity<Product> updateProduct(@RequestBody Product product, @PathVariable Long id) throws ProductNotFoundException {
+    public ResponseEntity<ProductDto> updateProduct(@RequestBody ProductDto productDto, @PathVariable Long id) throws ProductNotFoundException {
         log.info("Mise à jour du produit avec l'identifiant : {}", id);
 
         if (id == null)
             return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
 
-        Product updatedProduct = productService.updateProduct(id, product);
-        return ResponseEntity.ok(updatedProduct);
+        Product updatedProduct = productService.updateProduct(id, ProductMapper.mapToProduct(productDto));
+        ProductDto updatedProductDto = ProductMapper.mapToProductDto(updatedProduct);
+        return ResponseEntity.ok(updatedProductDto);
     }
 
     /**
@@ -93,6 +99,4 @@ public class ProductController {
         productService.deleteProduct(id);
         return ResponseEntity.noContent().build();
     }
-
 }
-

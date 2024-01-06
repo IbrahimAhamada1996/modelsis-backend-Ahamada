@@ -2,6 +2,8 @@ package com.modelsis.backendAhamada.controlleur;
 
 import com.modelsis.backendAhamada.Exception.ProductNotFoundException;
 import com.modelsis.backendAhamada.Exception.ProductTypeNotFoundException;
+import com.modelsis.backendAhamada.Mappers.ProductTypeMapper;
+import com.modelsis.backendAhamada.dto.ProductTypeDto;
 import com.modelsis.backendAhamada.models.ProductType;
 import com.modelsis.backendAhamada.service.ProductTypeService;
 import org.slf4j.Logger;
@@ -11,7 +13,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/productTypes")
@@ -23,31 +24,32 @@ public class ProductTypeController {
     public ProductTypeController(ProductTypeService productTypeService) {
         this.productTypeService = productTypeService;
     }
+
     /**
      * Récupère tous les types de produits.
      *
      * @return Une liste de types de produits.
      */
     @GetMapping
-    public ResponseEntity<List<ProductType>> getAllProductTypes() {
+    public ResponseEntity<List<ProductTypeDto>> getAllProductTypes() {
         log.info("Récupération de tous les types de produits.");
-
-        return ResponseEntity.ok(productTypeService.getAllProductTypes());
+        List<ProductTypeDto> productTypeDtos = ProductTypeMapper.mapToProductTypeDtoList(productTypeService.getAllProductTypes());
+        return ResponseEntity.ok(productTypeDtos);
     }
 
     /**
      * Crée un nouveau type de produit.
      *
-     * @param productType Le type de produit à créer.
+     * @param productTypeDto Le type de produit à créer.
      * @return Une ResponseEntity contenant le type de produit créé.
      */
     @PostMapping
-    public ResponseEntity<ProductType> createProductType(@RequestBody ProductType productType) {
-        log.info("Création d'un nouveau type de produit : {}", productType);
-
-        ProductType createdProductType = productTypeService.createProductType(productType);
-        return ResponseEntity.ok(createdProductType);
+    public ResponseEntity<ProductTypeDto> createProductType(@RequestBody ProductTypeDto productTypeDto) {
+        log.info("Création d'un nouveau type de produit : {}", productTypeDto);
+        ProductType createdProductType = productTypeService.createProductType(ProductTypeMapper.mapToProductType(productTypeDto));
+        return ResponseEntity.ok(ProductTypeMapper.mapToProductTypeDto(createdProductType));
     }
+
     /**
      * Récupère un type de produit par son identifiant.
      *
@@ -56,31 +58,34 @@ public class ProductTypeController {
      * @throws ProductTypeNotFoundException Si le type de produit n'est pas trouvé.
      */
     @GetMapping("/{id}")
-    public ResponseEntity<ProductType> getProductTypeById(@PathVariable Long id) throws ProductTypeNotFoundException {
+    public ResponseEntity<ProductTypeDto> getProductTypeById(@PathVariable Long id) throws ProductTypeNotFoundException {
         log.info("Récupération du type de produit avec l'identifiant : {}", id);
-
         ProductType productTypeRep = productTypeService.getProductTypeById(id);
-    return ResponseEntity.status(HttpStatus.FOUND).body(productTypeRep);
+        ProductTypeDto productTypeDto = ProductTypeMapper.mapToProductTypeDto(productTypeRep);
+        return ResponseEntity.status(HttpStatus.FOUND).body(productTypeDto);
     }
+
     /**
      * Met à jour un type de produit existant.
      *
-     * @param id L'identifiant du type de produit à mettre à jour.
+     * @param id                  L'identifiant du type de produit à mettre à jour.
      * @param updatedProductType Le type de produit mis à jour.
      * @return Une ResponseEntity contenant le type de produit mis à jour ou un statut NO_CONTENT si l'ID est nul.
      * @throws ProductTypeNotFoundException Si le type de produit n'est pas trouvé.
-     * @throws ProductNotFoundException Si le produit associé au type n'est pas trouvé.
+     * @throws ProductNotFoundException      Si le produit associé au type n'est pas trouvé.
      */
     @PutMapping("/{id}")
-    public ResponseEntity<ProductType> updateProductType(@PathVariable Long id, @RequestBody ProductType updatedProductType) throws ProductTypeNotFoundException, ProductNotFoundException {
+    public ResponseEntity<ProductTypeDto> updateProductType(@PathVariable Long id, @RequestBody ProductTypeDto updatedProductType) throws ProductTypeNotFoundException, ProductNotFoundException {
         log.info("Mise à jour du type de produit avec l'identifiant : {}", id);
 
-        if (id ==null)
-            return new ResponseEntity<ProductType>(HttpStatus.NO_CONTENT);
+        if (id == null)
+            return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
 
-        ProductType updated = productTypeService.updateProductType(id, updatedProductType);
-        return ResponseEntity.ok(updated);
+        ProductType updated = productTypeService.updateProductType(id, ProductTypeMapper.mapToProductType(updatedProductType));
+        ProductTypeDto updatedProductTypeDto = ProductTypeMapper.mapToProductTypeDto(updated);
+        return ResponseEntity.ok(updatedProductTypeDto);
     }
+
     /**
      * Supprime un type de produit par son identifiant.
      *
@@ -90,9 +95,7 @@ public class ProductTypeController {
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteProductType(@PathVariable Long id) {
         log.info("Suppression du type de produit avec l'identifiant : {}", id);
-
         productTypeService.deleteProductType(id);
         return ResponseEntity.noContent().build();
     }
 }
-

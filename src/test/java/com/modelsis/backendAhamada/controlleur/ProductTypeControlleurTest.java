@@ -1,8 +1,9 @@
 package com.modelsis.backendAhamada.controlleur;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.modelsis.backendAhamada.Mappers.ProductTypeMapper;
 import com.modelsis.backendAhamada.Repository.ProductTypeRepository;
-import com.modelsis.backendAhamada.models.Product;
+import com.modelsis.backendAhamada.dto.ProductTypeDto;
 import com.modelsis.backendAhamada.models.ProductType;
 import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.BeforeEach;
@@ -28,23 +29,26 @@ public class ProductTypeControlleurTest {
 
     @Autowired
     private ObjectMapper objectMapper;
+
     @Autowired
     private EntityManager em;
-    private ProductType productType;
+
     @Autowired
     private ProductTypeRepository productTypeRepository;
+
+    private ProductTypeDto productTypeDto;
+
     /**
      * Create an entity for this test.
      *
      * This is a static method, as tests for other entities might also need it,
      * if they test an entity which requires the current entity.
      */
-    public static ProductType createEntity(EntityManager em) {
-        ProductType productType = new ProductType();
-//        productType.setId(1L);
-        productType.setName("Vêtements");
-        productType.setCreatedAt(LocalDateTime.now());
-        return productType;
+    public static ProductTypeDto createEntityDto() {
+        return ProductTypeDto.builder()
+                .name("Vêtements")
+                .createdAt(LocalDateTime.now())
+                .build();
     }
 
     /**
@@ -53,82 +57,68 @@ public class ProductTypeControlleurTest {
      * This is a static method, as tests for other entities might also need it,
      * if they test an entity which requires the current entity.
      */
-    public static ProductType createUpdatedEntity(EntityManager em) {
-        ProductType productType = new ProductType();
-//        productType.setId(1L);
-        productType.setName("Électronique");
-        productType.setUpdatedAt(LocalDateTime.now());
-        return productType;
+    public static ProductTypeDto createUpdatedEntityDto() {
+        return ProductTypeDto.builder()
+                .id(1L)
+                .name("Électronique")
+                .updatedAt(LocalDateTime.now())
+                .build();
     }
 
     @BeforeEach
     public void initTest() {
-        this.productType = createEntity(em);
+        this.productTypeDto = createEntityDto();
     }
 
     @Test
-    void testCreateProductTypeType() throws Exception {
-
-//        ProductType productType = new ProductType();
-//        productType.setName("Test ProductTypeType");
-        productTypeRepository.saveAndFlush(this.productType);
-
+    void testCreateProductType() throws Exception {
         mockMvc.perform(MockMvcRequestBuilders.post("/productTypes")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(productType)))
+                        .content(objectMapper.writeValueAsString(productTypeDto)))
                 .andExpect(MockMvcResultMatchers.status().isOk())
                 .andExpect(jsonPath("$.name").value("Vêtements"));
     }
 
     @Test
     void testGetAllProductTypes() throws Exception {
-       productTypeRepository.saveAndFlush(this.productType);
-
+     ProductType productType =    productTypeRepository.saveAndFlush(ProductTypeMapper.mapToProductType(productTypeDto));
+    this.productTypeDto = ProductTypeMapper.mapToProductTypeDto(productType);
         mockMvc.perform(MockMvcRequestBuilders.get("/productTypes"))
                 .andExpect(MockMvcResultMatchers.status().isOk())
                 .andExpect(MockMvcResultMatchers.content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.[*].id").value(hasItem(this.productType.getId().intValue())))
-                .andExpect(jsonPath("$.[*].name").value(hasItem(this.productType.getName())))
+                .andExpect(jsonPath("$.[*].id").value(hasItem(productTypeDto.getId().intValue())))
+                .andExpect(jsonPath("$.[*].name").value(hasItem(productTypeDto.getName())))
         ;
     }
 
-
-
     @Test
     void testGetProductTypeById() throws Exception {
-//        Long productTypeId = 1L;
-        productTypeRepository.saveAndFlush(this.productType);
-        mockMvc.perform(MockMvcRequestBuilders.get("/productTypes/{id}", this.productType.getId()))
+        ProductType productType =   productTypeRepository.saveAndFlush(ProductTypeMapper.mapToProductType(productTypeDto));
+        this.productTypeDto = ProductTypeMapper.mapToProductTypeDto(productType);
+
+        mockMvc.perform(MockMvcRequestBuilders.get("/productTypes/{id}", productTypeDto.getId()))
                 .andExpect(MockMvcResultMatchers.status().isFound())
                 .andExpect(MockMvcResultMatchers.content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.id").value(this.productType.getId()))
-                .andExpect(jsonPath("$.name").value(this.productType.getName()))
-
-        ;
-
+                .andExpect(MockMvcResultMatchers.jsonPath("$.id").value(productTypeDto.getId()))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.name").value(productTypeDto.getName()));
     }
 
     @Test
     void testUpdateProductType() throws Exception {
-        Long productTypeId = 1L;
-//        ProductType updatedProductTypeType = new ProductType();
-//        updatedProductTypeType.setName("Updated ProductTypeType");
+        productTypeDto = ProductTypeMapper.mapToProductTypeDto(productTypeRepository.saveAndFlush(ProductTypeMapper.mapToProductType(createUpdatedEntityDto())));
 
-        this.productType = productTypeRepository.saveAndFlush(createUpdatedEntity(em));
-
-
-        mockMvc.perform(MockMvcRequestBuilders.put("/productTypes/{id}", productTypeId)
+        mockMvc.perform(MockMvcRequestBuilders.put("/productTypes/{id}", productTypeDto.getId())
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(productType)))
+                        .content(objectMapper.writeValueAsString(productTypeDto)))
                 .andExpect(MockMvcResultMatchers.status().isOk())
                 .andExpect(jsonPath("$.name").value("Électronique"));
     }
 
     @Test
     void testDeleteProductType() throws Exception {
-        Long productTypeId = 1L;
+        productTypeDto = ProductTypeMapper.mapToProductTypeDto(productTypeRepository.saveAndFlush(ProductTypeMapper.mapToProductType(createEntityDto())));
 
-        mockMvc.perform(MockMvcRequestBuilders.delete("/productTypes/{id}", productTypeId))
+        mockMvc.perform(MockMvcRequestBuilders.delete("/productTypes/{id}", productTypeDto.getId()))
                 .andExpect(MockMvcResultMatchers.status().isNoContent());
     }
 }
